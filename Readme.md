@@ -1,19 +1,35 @@
-Suba um projeto novo Wordpress utilizando Docker Compose.
+# Projeto WordPress com Docker Compose
 
-* Um container para o Wordpress utilizando versão mais recente.
-* O Wordpress deverá contar com um Agent do NewRelic para monitoramento com essa ferramenta
-* O container Wordpress DEVE ter a ferramenta wp-cli
+Este projeto implementa um ambiente Dockerizado para o WordPress, utilizando Docker Compose, de acordo com os requisitos especificados.
 
-* Um conrtainer de cache Redis. Certifique-se que de fato o Wordpress utilize isso pois, ele só o fará se no arquivo wp-config.php houver uma configuração para isso.
-* Um container de banco de dados MySQL|MariaDB mais recentes. 
-    * MySQL 8 em container deu um pau em nosso ambiente interno, estamos lá usando MariaDB 11.1
-* Camada de cache com Varnish para o webserver.
+## Detalhes do Projeto
 
-# Requisitos
-* O ambiente deverá estar com volume para que os arquivos e o banco de dados possam ser persistir.
-* Eles devem estar na mesma rede para comunicação.
-* Atende-se ao timezone do container do servidor Wordpress.
-* Atente-se ao tamanho máximo de log para um container. Já vi casos de um container gerando mais de 70GB de log e fudendo com o servidor por causa disso.
-* Atente-se a quantidade máxima de CPU e memória que um container pode consumir, senão, um ambiente mal configurado derruba um servidor inteiro.
+- **Container WordPress:** Utilizando a versão mais recente.
+- **Agente NewRelic:** Integrado para monitoramento com a ferramenta.
+- **WP-CLI:** Incluído no container WordPress.
+- **Container Redis:** Implementado para cache.
+- **Container mysql:5.7:** Utilizado como banco de dados.
+- **Camada de Cache com Varnish:** Configurada para o servidor web.
 
-Crie um board no Trello, permite que eu tenha acesso e crie no mínimo um card por tarefa.
+## Requisitos Atendidos
+
+- **Persistência de Dados:** Utilização de volumes para armazenar arquivos e dados do banco.
+- **Rede de Comunicação:** Containers estão na mesma rede para comunicação.
+- **Timezone:** Configurado conforme o timezone do servidor WordPress (America/Sao_Paulo).
+- **Gerenciamento de Log:** Limitado a um tamanho máximo de 10MB por arquivo, com um máximo de 10 arquivos.
+- **Limites de Recursos:** Definidos limites de CPU e memória para cada container.
+
+## Como Utilizar
+
+Para usar este projeto, siga estas etapas:
+
+1. Certifique-se de ter o Docker e o Docker Compose instalados.
+2. Clone este repositório para o seu ambiente local.
+3. Abra o terminal e navegue até o diretório do projeto.
+4. Execute o comando `make setup` para iniciar o ambiente.
+
+Isso iniciará os containers conforme configurado no arquivo `docker-compose.yml` e você poderá acessar o WordPress através do navegador usando o endereço local e a porta configurada.
+
+Lembre-se de configurar as variáveis de ambiente necessárias no arquivo `.env` antes de executar o ambiente.
+
+Para mais detalhes sobre configurações específicas ou personalizações, consulte a documentação completa no arquivo `docker-compose.yml`.

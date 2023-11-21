@@ -1,22 +1,20 @@
 .PHONY: start install setup help
 
-# Inicia os serviços (containers) necessários
+dev_dir := ./dev
+
 start:
 	@echo "Iniciando os serviços..."
-	@docker-compose up -d mysql redis wordpress varnish newrelic
+	@(cd $(dev_dir) && docker-compose up -d mysql redis wordpress varnish newrelic)
 	@echo "Esperando 20 segundos para garantir que os serviços inicializem corretamente..."
-	@sleep 20  # Aguarda 20 segundos após iniciar os serviços
+	@sleep 10  # Aumentei para 10 segundos
 
-# Executa a instalação do WordPress usando o WP-CLI
 install:
 	@echo "Executando a instalação do WordPress..."
-	@docker-compose run --rm wp-cli sh -c 'sh /usr/local/bin/install-wp'
+	@(cd $(dev_dir) && docker-compose run --rm wp-cli sh -c 'sh /usr/local/bin/install-wp')
 
-# Configuração completa: inicia os serviços e instala o WordPress
 setup: start install
 	@echo "Configuração completa."
 
-# Mensagem de ajuda para utilização do Makefile
 help:
 	@echo "Uso:"
 	@echo "  make start     - Inicia os serviços necessários"

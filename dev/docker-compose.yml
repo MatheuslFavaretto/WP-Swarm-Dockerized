@@ -1,0 +1,166 @@
+version: "3.9"
+
+services:
+
+  # Configuração do serviço MySQL
+  mysql:
+    image: mysql:5.7
+    volumes:
+      - ./db_data:/var/lib/mysql  # Volume para persistência dos dados do MySQL
+      - /var/run/docker.sock:/var/run/docker.sock  # Compartilhamento do socket do Docker
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro  # Montagem somente leitura do cgroup
+    restart: always  # Reinicialização automática do container
+    env_file: .env  # Arquivo de variáveis de ambiente
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}  # Configurações de senha e banco de dados
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      NRIA_LICENSE_KEY: "e2b9d1687c93a7dd21e14bfb7b78601aFFFFNRAL"  # Chave de licença New Relic
+    networks:
+      - wordpress-network  # Conexão à rede definida
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'  # Limite de CPU para o MySQL
+          memory: 500M  # Limite de memória RAM para o MySQL
+
+  # Configuração do serviço Redis
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"  # Mapeamento de porta
+    networks:
+      - wordpress-network  # Conexão à rede definida
+    environment:
+      NRIA_LICENSE_KEY: "e2b9d1687c93a7dd21e14bfb7b78601aFFFFNRAL"  # Chave de licença New Relic
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  # Compartilhamento do socket do Docker
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro  # Montagem somente leitura do cgroup
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'  # Limite de CPU para o Redis
+          memory: 300M  # Limite de memória RAM para o Redis
+
+  # Configuração do serviço WordPress
+  wordpress:
+    depends_on:
+      - mysql  # Dependência do serviço MySQL
+    image: wordpress:latest
+    ports:
+      - ${WORDPRESS_PORT}:80  # Mapeamento de porta personalizado
+    restart: always  # Reinicialização automática do container
+    env_file: .env  # Arquivo de variáveis de ambiente
+    environment:
+      TZ: "America/Sao_Paulo"
+      # Configurações do banco de dados WordPress
+      WORDPRESS_DB_HOST: mysql
+      WORDPRESS_DB_NAME: ${MYSQL_DATABASE}
+      WORDPRESS_DB_USER: ${MYSQL_USER}
+      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}
+      WORDPRESS_TABLE_PREFIX: ${WORDPRESS_TABLE_PREFIX}
+      WORDPRESS_DEBUG: ${WORDPRESS_DEBUG:-false}
+    
+      # Configurações de cache com Redis
+      WP_REDIS_HOST: redis
+      WP_REDIS_PORT: 6379
+      WP_CACHE: "true"
+      NRIA_LICENSE_KEY: "e2b9d1687c93a7dd21e14bfb7b78601aFFFFNRAL"  # Chave de licença New Relic
+
+    logging:
+      driver: "json-file"  # Define o driver de log para JSON
+      options:
+        max-size: "10m"  # Limite de tamanho para cada arquivo de log (10MB)
+        max-file: "10"  # Número máximo de arquivos de log antes da rotação (uma semana de logs)
+
+    volumes:
+      - ./wp_data:/var/www/html:rw  # Volume para persistência dos dados do WordPress
+      - ./configuration/apache2.conf:/etc/apache2/apache2.conf:ro  # Arquivo de configuração do Apache
+      - /var/run/docker.sock:/var/run/docker.sock  # Compartilhamento do socket do Docker
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro  # Montagem somente leitura do cgroup
+    networks:
+      - wordpress-network  # Conexão à rede definida
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'  # Limite de CPU para o WordPress
+          memory: 1G  # Limite de memória RAM para o WordPress
+
+  # Configuração do serviço wp-cli
+  wp-cli:
+    depends_on:
+      - mysql
+      - wordpress
+    image: wordpress:cli
+    env_file: .env  # Arquivo de variáveis de ambiente
+    user: xfs
+    environment:
+      WP_CLI_CACHE_DIR: ${WP_CLI_CACHE_DIR}
+      WORDPRESS_DB_USER: ${MYSQL_USER}
+      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}
+      NRIA_LICENSE_KEY: "e2b9d1687c93a7dd21e14bfb7b78601aFFFFNRAL"  # Chave de licença New Relic
+    volumes:
+      - ./wp_data:/var/www/html:rw  # Volume para persistência dos dados do WordPress
+      - ./bin/install-wp.sh:/usr/local/bin/install-wp:ro  # Script de instalação do WordPress
+      - /var/run/docker.sock:/var/run/docker.sock  # Compartilhamento do socket do Docker
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro  # Montagem somente leitura do cgroup
+    networks:
+      - wordpress-network  # Conexão à rede definida
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'  # Limite de CPU para o wp-cli
+          memory: 500M  # Limite de memória RAM para o wp-cli
+
+  # Configuração do serviço Varnish
+  varnish:
+    image: varnish:latest
+    ports:
+      - "8000:80"  # Mapeamento de porta personalizado
+    depends_on:
+      - wordpress  # Dependência do serviço WordPress
+    networks:
+      - wordpress-network  # Conexão à rede definida
+    command: >
+      varnishd -F -a :80 -b wordpress:80 -s malloc,256m  # Comando de inicialização do Varnish
+    environment:
+      VARNISH_STORAGE: malloc
+      VARNISH_STORAGE_SIZE: 256M
+      VARNISH_BACKEND_HOST: wordpress
+      VARNISH_BACKEND_PORT: 80
+      NRIA_LICENSE_KEY: "e2b9d1687c93a7dd21e14bfb7b78601aFFFFNRAL"  # Chave de licença New Relic
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  # Compartilhamento do socket do Docker
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro  # Montagem somente leitura do cgroup
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'  # Limite de CPU para o Varnish
+          memory: 300M  # Limite de memória RAM para o Varnish
+
+  # Configuração do serviço New Relic
+  newrelic:
+    image: newrelic/infrastructure:latest
+    hostname: newrelic
+    privileged: true  # Privilegiado para acessar recursos do sistema
+    environment:
+      NRIA_LICENSE_KEY: "e2b9d1687c93a7dd21e14bfb7b78601aFFFFNRAL"  # Chave de licença New Relic
+    networks:
+      - wordpress-network  # Conexão à rede definida
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  # Compartilhamento do socket do Docker
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro  # Montagem somente leitura do cgroup
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'  # Limite de CPU para o New Relic
+          memory: 200M  # Limite de memória RAM para o New Relic
+
+volumes:
+  db_data:  # Volume para persistência dos dados do MySQL
+  wp_data:  # Volume para persistência dos dados do WordPress
+
+networks:
+  wordpress-network:
+    driver: bridge  # Configuração da rede do Docker
