@@ -1,0 +1,76 @@
+version: '3'
+
+services:
+  wordpress:
+    build:
+      context: ./wordpress
+      dockerfile: Dockerfile
+    environment:
+      NEW_RELIC_LICENSE_KEY: e2b9d1687c93a7dd21e14bfb7b78601aFFFFNRAL
+      NEW_RELIC_APP_NAME: WORDPRESS
+    ports:
+      - "8080:80"
+    volumes:
+      - wordpress_data:/var/www/html
+    env_file:
+      - ./wordpress/.env
+    depends_on:
+      - db
+    networks:
+      - my_network
+
+  db:
+    build:
+      context: ./db
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    env_file:
+      - ./db/.env
+    networks:
+      - my_network
+
+  redis:
+    build:
+      context: ./redis
+    ports:
+      - "6379:6379"
+    networks:
+      - my_network
+
+  varnish:
+    build:
+      context: ./varnish
+      dockerfile: Dockerfile
+    ports:
+      - "6081:6081"
+    depends_on:
+      - wordpress
+    volumes:
+      - ./varnish/config.vcl:/etc/varnish/default.vcl:ro
+    networks:
+      - my_network
+
+  wp-cli:
+    depends_on:
+      - wordpress
+      - db
+    image: wordpress:cli
+    user: xfs
+    environment:
+      WP_CLI_CACHE_DIR: /tmp
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: wordpressuser
+      WORDPRESS_DB_PASSWORD: secretpassword
+    volumes:
+      - wordpress_data:/var/www/html
+      - ./wordpress/init_wordpress.sh:/usr/local/bin/init_wordpress:ro
+    networks:
+      - my_network
+
+volumes:
+  wordpress_data:
+  mariadb_data:
+
+networks:
+  my_network:
+    driver: bridge
