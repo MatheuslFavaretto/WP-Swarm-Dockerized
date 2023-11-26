@@ -1,22 +1,28 @@
-.PHONY: start install setup help
+.PHONY: dev prod help
 
 dev_dir := ./dev
+prod_dir := ./prod
 
-start:
-	@echo "Iniciando os serviços..."
+dev: ## Inicia serviços e instala o WordPress no ambiente de desenvolvimento
+	@echo "Iniciando os serviços no ambiente de desenvolvimento..."
 	@(cd $(dev_dir) && docker-compose up -d mysql redis wordpress varnish newrelic)
-	@echo "Esperando 20 segundos para garantir que os serviços inicializem corretamente..."
+	@echo "Esperando 10 segundos para garantir que os serviços inicializem corretamente..."
 	@sleep 10  # Aumentei para 10 segundos
-
-install:
-	@echo "Executando a instalação do WordPress..."
+	@echo "Executando a instalação do WordPress no ambiente de desenvolvimento..."
 	@(cd $(dev_dir) && docker-compose run --rm wp-cli sh -c 'sh /usr/local/bin/install-wp')
+	@echo "Configuração completa no ambiente de desenvolvimento."
 
-setup: start install
-	@echo "Configuração completa."
+prod: ## Inicia serviços e instala o WordPress no ambiente de produção
+	@echo "Iniciando os serviços no ambiente de produção..."
+	@(cd $(prod_dir) && docker-compose up --build -d db redis varnish)
+	@echo "Esperando 10 segundos para garantir que os serviços inicializem corretamente..."
+	@sleep 10  # Aumentei para 10 segundos
+	@(cd $(prod_dir) && docker-compose up --build -d wordpress)
+	@echo "Executando a instalação do WordPress no ambiente de produção..."
+	@(cd $(prod_dir) && docker-compose run --rm wp-cli sh -c 'sh /usr/local/bin/init_wordpress')
+	@echo "Configuração completa no ambiente de produção."
 
-help:
+help: ## Exibe informações de uso
 	@echo "Uso:"
-	@echo "  make start     - Inicia os serviços necessários"
-	@echo "  make install   - Executa a instalação do WordPress"
-	@echo "  make setup     - Inicia os serviços e instala o WordPress"
+	@echo "  make dev  - Inicia serviços e instala o WordPress no ambiente de desenvolvimento"
+	@echo "  make prod - Inicia serviços e instala o WordPress no ambiente de produção"

@@ -1,62 +1,61 @@
 #!/usr/bin/env sh
 
-# Install WordPress.
+# Instalação do WordPress.
 wp core install \
   --path="/var/www/html" \
   --url="http://localhost:8080" \
-  --title="Blog Title Here" \
+  --title="Título do Blog" \
   --admin_user="admin" \
   --admin_password="admin-password" \
-  --admin_email="admin@domain.com"
+  --admin_email="admin@domain.com" \
+  --locale=pt_BR
 
-# Update permalink structure.
-wp option update \
-  permalink_structure /%postname%/  \
-  --skip-themes \
+# Atualiza a estrutura de permalinks.
+wp option update permalink_structure /%postname%/ --skip-themes
 
-# Theme installation
-wp theme delete --all --force  # Remove todos os temas
-wp theme install astra --activate  # Instala e ativa um tema
+# Instala e ativa o tema Astra.
+wp theme install astra --activate
 
-# Plugin installation
-wp plugin uninstall --all  # Desinstala todos os plugins
-wp plugin install redis-cache --activate  # Instala e ativa plugins
+# Remove todos os temas (exceto o tema ativo).
+wp theme delete --all --force
 
-# Configure Redis Object Cache
-wp config set --type=variable redis_host 'redis'  # Define o host do Redis
-wp config set --type=variable redis_port '6379'   # Define a porta do Redis
+# Desinstala todos os plugins.
+wp plugin uninstall --all
 
-# Ativa o cache do Redis para o WordPress
+# Instala e ativa o plugin Redis Object Cache.
+wp plugin install redis-cache --activate
+
+# Configura o Redis Object Cache.
+wp config set --type=variable redis_host 'redis'
+wp config set --type=variable redis_port '6379'
 wp config set --type=constant WP_REDIS_HOST 'redis'
 wp config set --type=constant WP_REDIS_PORT '6379'
 wp config set --type=constant WP_REDIS_SELECTIVE_FLUSH 'true'
 wp config set --type=constant WP_CACHE 'true'
+wp redis enable
 
-# Next, enable the drop-in:
-wp redis enable  # Ativa o drop-in do Redis
+# Verifica o status da conexão do Redis.
+wp redis status
 
-# Check the connection:
-wp redis status  # Verifica o status da conexão do Redis
-
-# Configure the plugin
+# Configurações adicionais do plugin Redis.
 wp config set WP_REDIS_HOST "redis"
 wp config set WP_REDIS_PORT "6379"
 wp config set WP_REDIS_DATABASE "15"
 
+# Define o fuso horário para São Paulo (America/Sao_Paulo).
+wp option update timezone_string "America/Sao_Paulo"
 
-echo -e "\nREPORT\n"
+# Exibe um relatório com lista de usuários, temas e plugins instalados.
+echo -e "\nRELATÓRIO\n"
 
-# List users
-echo "== User List =="
+echo "== Lista de Usuários =="
 wp user list
 echo ""
 
-# Show installed theme
-echo "== Theme List =="
+echo "== Lista de Temas Instalados =="
 wp theme list
 echo ""
 
-# Show installed plugins
-echo "== Plugin List =="
+echo "== Lista de Plugins Instalados =="
 wp plugin list
 echo ""
