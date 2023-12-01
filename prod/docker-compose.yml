@@ -17,7 +17,8 @@ services:
     depends_on:
       - db
     networks:
-      - my_network
+      - api
+      - monit
     logging:
       driver: "json-file"
       options:
@@ -30,7 +31,7 @@ services:
     volumes:
       - mariadb_data:/var/lib/mysql
     networks:
-      - my_network
+      - db
     logging:
       driver: "json-file"
       options:
@@ -43,7 +44,7 @@ services:
     ports:
       - "6379:6379"
     networks:
-      - my_network
+      - db
     logging:
       driver: "json-file"
       options:
@@ -61,7 +62,7 @@ services:
     volumes:
       - ./varnish/config.vcl:/etc/varnish/default.vcl:ro
     networks:
-      - my_network
+      - api
     logging:
       driver: "json-file"
       options:
@@ -83,17 +84,22 @@ services:
       - wordpress_data:/var/www/html
       - ./wordpress/init_wordpress.sh:/usr/local/bin/init_wordpress:ro
     networks:
-      - my_network
+      - api
+      - monit
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "7"
 
+networks:
+  api:
+    driver: bridge
+  monit:
+    driver: bridge
+  db:
+    driver: bridge
+
 volumes:
   wordpress_data:
   mariadb_data:
-
-networks:
-  my_network:
-    driver: bridge
