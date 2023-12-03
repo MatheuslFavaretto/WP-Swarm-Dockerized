@@ -1,4 +1,12 @@
 # Projeto WordPress com Docker Compose
+<table>
+    <tr>
+        <th>Diagrama do Projeto</th>
+    </tr>
+    <tr>
+        <td><img src="https://github.com/MatheuslFavaretto/devops-project/assets/116848225/e7601e1a-2d87-4db0-87ee-1e3bfacc7c3a" alt="listar todos os vídeos"></td>
+    </tr>
+</table>
 
 Este projeto implementa um ambiente Dockerizado para o WordPress, utilizando Docker Compose, de acordo com os requisitos especificados.
 
