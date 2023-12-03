@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  wordpress:
+    build:
+      context: ./wordpress
+      dockerfile: Dockerfile
+    environment:
+      NEW_RELIC_LICENSE_KEY: "${NEW_RELIC_LICENSE_KEY}"
+      NEW_RELIC_APP_NAME: WORDPRESS
+    ports:
+      - "8080:80"
+    volumes:
+      - wordpress_data:/var/www/html
+    env_file:
+      - .env
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: any
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "7"
+
+  db:
+    build:
+      context: ./db
+      dockerfile: Dockerfile
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: any
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "7"
+
+  redis:
+    build:
+      context: ./redis
+      dockerfile: Dockerfile
+    ports:
+      - "6379:6379"
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: any
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "7"
+
+  wp-cli:
+    build:
+      context: ./wordpress
+      dockerfile: Dockerfile
+    user: xfs
+    environment:
+      WP_CLI_CACHE_DIR: /tmp
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: wordpressuser
+      WORDPRESS_DB_PASSWORD: secretpassword
+    volumes:
+      - wordpress_data:/var/www/html
+      - ./wordpress/init_wordpress.sh:/usr/local/bin/init_wordpress:ro
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: any
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "7"
+
+volumes:
+  wordpress_data:
+  mariadb_data:
+
+networks:
+  my_network:

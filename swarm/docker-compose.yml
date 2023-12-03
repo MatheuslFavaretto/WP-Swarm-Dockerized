@@ -1,0 +1,83 @@
+version: '3'
+
+services:
+  wordpress:
+    build:
+      context: ./wordpress
+      dockerfile: Dockerfile
+    environment:
+      NEW_RELIC_LICENSE_KEY: "${NEW_RELIC_LICENSE_KEY}"
+      NEW_RELIC_APP_NAME: WORDPRESS
+    ports:
+      - "8080:80"
+    volumes:
+      - wordpress_data:/var/www/html
+    env_file:
+      - .env
+    depends_on:
+      - db
+    networks:
+      - api
+      - monit
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "7"
+
+  db:
+    build:
+      context: ./db
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - db
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "7"
+        
+  redis:
+    build:
+      context: ./redis
+    ports:
+      - "6379:6379"
+    networks:
+      - db
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "7"
+
+  varnish:
+    build:
+      context: ./varnish
+      dockerfile: Dockerfile
+    ports:
+      - "6081:6081"
+    depends_on:
+      - wordpress
+    volumes:
+      - ./varnish/config.vcl:/etc/varnish/default.vcl:ro
+    networks:
+      - api
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "7"
+
+networks:
+  api:
+    driver: bridge
+  monit:
+    driver: bridge
+  db:
+    driver: bridge
+
+volumes:
+  wordpress_data:
+  mariadb_data:
