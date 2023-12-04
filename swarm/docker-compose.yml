@@ -52,23 +52,6 @@ services:
         max-size: "10m"
         max-file: "7"
 
-  varnish:
-    build:
-      context: ./varnish
-      dockerfile: Dockerfile
-    ports:
-      - "6081:6081"
-    depends_on:
-      - wordpress
-    volumes:
-      - ./varnish/config.vcl:/etc/varnish/default.vcl:ro
-    networks:
-      - api
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "7"
 
 networks:
   api:

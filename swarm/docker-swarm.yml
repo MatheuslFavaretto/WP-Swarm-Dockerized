@@ -1,11 +1,10 @@
 version: '3.7'
 
 networks:
-  api:
+  frontend:
     driver: overlay
     attachable: true
-
-  monit:
+  backend:
     driver: overlay
     attachable: true
 
@@ -15,15 +14,14 @@ services:
     volumes:
       - db_data:/var/lib/mysql
     ports:
-      - 3306:3306
+      - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: secretpassword
       MYSQL_DATABASE: wordpress
       MYSQL_USER: wordpressuser
       MYSQL_PASSWORD: secretpassword
     networks:
-      - api
-      - monit
+      - backend
     deploy:
       replicas: 1
       restart_policy:
@@ -32,24 +30,31 @@ services:
         limits:
           cpus: '1'
           memory: 1G
+    logging:
+      driver: local
+      options:
+        max-size: '500m'
+        max-file: '5'
 
   wordpress:
-    depends_on:
-      - db
     image: matheuslfavaretto/wordpress:latest
     ports:
-      - 8080:80
+      - "8080:80"
     networks:
-      - api
-      - monit
+      - frontend
+      - backend
     environment:
       WORDPRESS_DB_HOST: db
       WORDPRESS_DB_USER: wordpressuser
       WORDPRESS_DB_PASSWORD: secretpassword
       WORDPRESS_DB_NAME: wordpress
       WORDPRESS_TABLE_PREFIX: _wp
+      WP_REDIS_HOST: redis
+      WP_REDIS_PORT: 6379
+      WP_CACHE: "true"
     volumes:
       - wordpress_data:/var/www/html
+      - ./wordpress/init_wordpress.sh:/usr/local/bin/init_wordpress.sh
     deploy:
       replicas: 1
       restart_policy:
@@ -58,9 +63,30 @@ services:
         limits:
           cpus: '1'
           memory: 1G
+    logging:
+      driver: local
+      options:
+        max-size: '500m'
+        max-file: '5'
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    networks:
+      - backend
+    volumes:
+      - redis_data:/data
+    logging:
+      driver: local
+      options:
+        max-size: '500m'
+        max-file: '5'
 
 volumes:
   db_data:
     driver: local
   wordpress_data:
+    driver: local
+  redis_data:
     driver: local
