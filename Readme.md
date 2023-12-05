@@ -1,42 +1,46 @@
 # Projeto WordPress com Docker Compose
-<table>
-    <tr>
-        <th>Diagrama do Projeto</th>
-    </tr>
-    <tr>
-        <td><img src="https://github.com/MatheuslFavaretto/devops-project/assets/116848225/e7601e1a-2d87-4db0-87ee-1e3bfacc7c3a" alt="listar todos os vídeos"></td>
-    </tr>
-</table>
 
-Este projeto implementa um ambiente Dockerizado para o WordPress, utilizando Docker Compose, de acordo com os requisitos especificados.
+![Diagrama do Projeto](https://github.com/MatheuslFavaretto/devops-project/assets/116848225/e7601e1a-2d87-4db0-87ee-1e3bfacc7c3a)
+
+Este projeto tem como objetivo implementar um ambiente Dockerizado para o WordPress, utilizando Docker Compose, de acordo com os requisitos estabelecidos abaixo.
 
 ## Detalhes do Projeto
 
-- **Container WordPress:** Utilizando a versão mais recente.
-- **Agente NewRelic:** Integrado para monitoramento com a ferramenta.
-- **WP-CLI:** Incluído no container WordPress.
-- **Container Redis:** Implementado para cache.
+- **Container WordPress:** Utiliza a versão mais recente disponível.
+- **Agente NewRelic:** Integrado para fins de monitoramento, utilizando a ferramenta.
+- **WP-CLI:** Incluído no container do WordPress para facilitar a administração.
+- **Container Redis:** Implementado para funcionalidade de cache.
 - **Container mariadb:** Utilizado como banco de dados.
 
 ## Requisitos Atendidos
 
-- **Persistência de Dados:** Utilização de volumes para armazenar arquivos e dados do banco.
-- **Rede de Comunicação:** Containers estão na mesma rede para comunicação.
-- **Timezone:** Configurado conforme o timezone do servidor WordPress (America/Sao_Paulo).
-- **Gerenciamento de Log:** Limitado a um tamanho máximo de 10MB por arquivo, com um máximo de 10 arquivos.
+- **Persistência de Dados:** Utilização de volumes para armazenamento de arquivos e dados do banco.
+- **Rede de Comunicação:** Todos os containers estão na mesma rede para uma comunicação eficiente.
+- **Timezone:** Configurado de acordo com o timezone do servidor do WordPress (America/Sao_Paulo).
+- **Gerenciamento de Log:** Limitado a um tamanho máximo de 500MB por arquivo, com um máximo de 5 arquivos.
 - **Limites de Recursos:** Definidos limites de CPU e memória para cada container.
 
 ## Como Utilizar
 
-Para usar este projeto, siga estas etapas:
+Para utilizar este projeto, siga as instruções abaixo:
 
-1. Certifique-se de ter o Docker e o Docker Compose instalados.
+1. Verifique se possui o Docker e o Docker Compose instalados.
 2. Clone este repositório para o seu ambiente local.
-3. Abra o terminal e navegue até o diretório do projeto.
-4. Execute o comando `make prod` para iniciar o ambiente.
+3. Navegue até o diretório do projeto no terminal.
+4. Antes de executar o ambiente, configure as variáveis de ambiente necessárias no arquivo `.env`.
+5. Execute o comando `make prod` para iniciar o ambiente.
 
-Isso iniciará os containers conforme configurado no arquivo `docker-compose.yml` e você poderá acessar o WordPress através do navegador usando o endereço local e a porta configurada.
+Isso iniciará os containers de acordo com a configuração definida no arquivo `docker-compose.yml`. Você poderá acessar o WordPress pelo navegador, utilizando o endereço local e a porta configurada.
 
-Lembre-se de configurar as variáveis de ambiente necessárias no arquivo `.env` antes de executar o ambiente.
+Para obter detalhes mais específicos sobre configurações ou personalizações, consulte a documentação completa no arquivo `docker-compose.yml`.
 
-Para mais detalhes sobre configurações específicas ou personalizações, consulte a documentação completa no arquivo `docker-compose.yml`.
+## Estrutura do Projeto
+
+- **Diretório `dev`:** Contém o projeto apenas com Docker Compose.
+- **Diretório `prod`:** Projeto organizado com cada diretório tendo seu próprio Dockerfile e um docker-compose que constrói e inicia.
+- **Diretório `swarm`:** Projeto com Docker Swarm. O comando `make all` realiza o build e push das imagens para o Docker Hub. Para iniciar, utilize os comandos: `docker swarm init --advertise-addr [seu endereço de IP]` e `docker stack deploy -c docker-swarm.yml app`.
+
+Lembre-se de que cada diretório possui sua própria configuração e propósito, adequando-se a diferentes necessidades e ambientes.
+
+---
+*Observação: Verifique se adapta os comandos e configurações conforme necessário para o seu ambiente específico.*
