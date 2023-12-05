@@ -1,4 +1,4 @@
-# Projeto WordPress com Docker Compose
+# Projeto WordPress com Docker
 
 ![Diagrama do Projeto](https://github.com/MatheuslFavaretto/devops-project/assets/116848225/e7601e1a-2d87-4db0-87ee-1e3bfacc7c3a)
 
